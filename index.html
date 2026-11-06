@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>초등 4학년 하루 10단어 영어 퀴즈</title>
+    <title>초등 4학년 하루 10단어 영어 퀴즈 (365일 무한 셔플)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -383,15 +383,28 @@
             { word: "Discover", phonetic: "[dɪˈskʌvər]", pos: "동사", meaning: "발견하다", example: "We discovered a hidden treasure map." }
         ];
 
-        // Dynamic 365-day generator for 10 words per day
+        // Dynamic 365-day generator for 10 words per day (Infinite Shuffle System)
         function getWordsForDay(dayNumber) {
             const list = [];
-            const totalMaster = masterVocabulary.length;
-            const startIndex = ((dayNumber - 1) * 10) % totalMaster;
+            
+            // Seed-based pseudo-random generator to ensure consistent words for each day
+            let seed = dayNumber * 1234567;
+            function pseudoRandom() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }
 
+            // Create a shuffled copy of the master vocabulary for this specific day
+            const shuffledPool = [...masterVocabulary];
+            for (let i = shuffledPool.length - 1; i > 0; i--) {
+                const j = Math.floor(pseudoRandom() * (i + 1));
+                [shuffledPool[i], shuffledPool[j]] = [shuffledPool[j], shuffledPool[i]];
+            }
+
+            // Take 10 words for the requested day
             for (let i = 0; i < 10; i++) {
-                const itemIdx = (startIndex + i) % totalMaster;
-                list.push(masterVocabulary[itemIdx]);
+                const itemIdx = (i + ((dayNumber - 1) * 3)) % shuffledPool.length;
+                list.push(shuffledPool[itemIdx]);
             }
             return list;
         }
@@ -779,7 +792,8 @@
             const dayListContainer = document.getElementById('day-list');
             dayListContainer.innerHTML = '';
 
-            for (let dayInt = 1; dayInt <= 15; dayInt++) {
+            // Display quick-select days in modal
+            for (let dayInt = 1; dayInt <= 30; dayInt++) {
                 const isSelected = !isRandomMode && dayInt === currentDay;
                 const btn = document.createElement('button');
                 btn.className = `w-full p-3 rounded-2xl font-bold text-xs text-left flex items-center justify-between transition ${
@@ -787,7 +801,7 @@
                 }`;
                 btn.onclick = () => loadDay(dayInt);
                 btn.innerHTML = `
-                    <span>Day ${dayInt} (10단어)</span>
+                    <span>Day ${dayInt} (10단어 셔플)</span>
                     ${isSelected ? '<i data-lucide="check" class="w-4 h-4 text-amber-600"></i>' : ''}
                 `;
                 dayListContainer.appendChild(btn);
