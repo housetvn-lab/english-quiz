@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초등 4학년 하루 10단어 영어 퀴즈</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Pretendard:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Pretendard', sans-serif;
+        }
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+        .flip-card {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+        .bounce-in {
+            animation: bounce 0.4s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50/60 text-slate-800 min-h-screen flex flex-col justify-between antialiased selection:bg-amber-200">
+
+    <!-- Header -->
+    <header class="bg-white border-b-2 border-amber-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white font-jua text-xl shadow-md shadow-orange-200">
+                    10
+                </div>
+                <div>
+                    <h1 class="font-jua text-xl leading-tight text-amber-900">초등 4학년 하루 10단어</h1>
+                    <p class="text-xs text-amber-600 font-bold" id="current-day-label">Day 1 단어장</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button onclick="pickRandom10Words()" class="p-2 bg-amber-100 hover:bg-amber-200 rounded-xl text-amber-800 transition font-bold text-xs flex items-center gap-1" title="랜덤 10단어">
+                    <i data-lucide="shuffle" class="w-4 h-4"></i>
+                </button>
+                <button id="day-select-btn" onclick="openDayModal()" class="flex items-center gap-1 px-3 py-2 bg-amber-100 hover:bg-amber-200 rounded-xl text-xs font-bold text-amber-900 transition">
+                    <i data-lucide="calendar" class="w-4 h-4 text-amber-600"></i>
+                    <span id="selected-day-btn-text">Day 1</span>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-md mx-auto w-full px-4 py-4 flex-1 flex flex-col justify-center">
+
+        <!-- Mode Selector (Single / 2-Player) -->
+        <div class="flex items-center justify-between bg-amber-200/50 p-1.5 rounded-2xl mb-4 text-xs font-bold">
+            <button id="mode-single" onclick="setMode('single')" class="flex-1 py-1.5 rounded-xl text-center bg-white text-amber-900 shadow-sm transition flex items-center justify-center gap-1">
+                <i data-lucide="user" class="w-3.5 h-3.5"></i> 혼자서 풀기
+            </button>
+            <button id="mode-multi" onclick="setMode('multi')" class="flex-1 py-1.5 rounded-xl text-center text-amber-700 hover:text-amber-900 transition flex items-center justify-center gap-1">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i> 2인 대결 모드! 🥊
+            </button>
+        </div>
+
+        <!-- Name Input for 2-Player Mode -->
+        <div id="player-names-input" class="hidden bg-orange-100 border border-orange-300 p-3 rounded-2xl mb-4 space-y-2">
+            <div class="text-xs font-bold text-orange-900 flex items-center gap-1">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> 대결할 친구 이름을 입력하세요!
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="p1-name-input" value="친구 A" placeholder="학생 1 이름" class="flex-1 px-3 py-1.5 border rounded-xl text-xs font-bold outline-none focus:border-orange-500">
+                <input type="text" id="p2-name-input" value="친구 B" placeholder="학생 2 이름" class="flex-1 px-3 py-1.5 border rounded-xl text-xs font-bold outline-none focus:border-orange-500">
+                <button onclick="applyPlayerNames()" class="px-3 py-1.5 bg-orange-500 text-white rounded-xl text-xs font-bold whitespace-nowrap">적용</button>
+            </div>
+        </div>
+
+        <!-- Tab Controls -->
+        <div class="flex bg-slate-200/80 p-1 rounded-2xl mb-5 font-bold text-sm">
+            <button id="tab-learn" onclick="switchTab('learn')" class="flex-1 py-2.5 rounded-xl text-center bg-white text-amber-600 shadow-sm transition">
+                1. 10단어 학습 📖
+            </button>
+            <button id="tab-quiz" onclick="switchTab('quiz')" class="flex-1 py-2.5 rounded-xl text-center text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1">
+                2. 퀴즈 도전 🎯
+            </button>
+        </div>
+
+        <!-- Section 1: Learn Mode -->
+        <div id="view-learn" class="space-y-4">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+                <span id="learn-mode-title" class="text-amber-800">Day 1 카드 (터치해서 뜻 확인!)</span>
+                <span id="card-progress" class="bg-amber-200 px-2 py-0.5 rounded-full text-amber-900 font-extrabold">1 / 10</span>
+            </div>
+
+            <!-- Flash Card -->
+            <div id="flash-card" class="flip-card w-full h-72 cursor-pointer" onclick="toggleCardFlip()">
+                <div class="flip-card-inner relative w-full h-full duration-500">
+                    <!-- Card Front (English) -->
+                    <div class="flip-card-front absolute inset-0 bg-white border-2 border-amber-200 rounded-3xl p-6 shadow-xl flex flex-col justify-between items-center text-center">
+                        <div class="w-full flex justify-between items-center text-amber-500">
+                            <span id="card-pos" class="text-xs font-bold px-3 py-1 bg-amber-100 text-amber-800 rounded-full">명사</span>
+                            <button onclick="event.stopPropagation(); speakWord();" class="p-2.5 bg-amber-50 hover:bg-amber-100 rounded-full text-amber-600 transition shadow-sm" title="발음 듣기">
+                                <i data-lucide="volume-2" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                        <div class="my-auto">
+                            <h2 id="card-word" class="text-4xl font-jua text-slate-900 mb-1 tracking-wide">Adventure</h2>
+                            <p id="card-phonetic" class="text-sm text-slate-400 font-mono">[ədˈventʃər]</p>
+                        </div>
+                        <p class="text-xs text-amber-600 font-bold flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
+                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> 카드를 누르면 뜻이 보여요!
+                        </p>
+                    </div>
+
+                    <!-- Card Back (Korean) -->
+                    <div class="flip-card-back absolute inset-0 bg-gradient-to-b from-amber-500 to-orange-500 border-2 border-orange-400 text-white rounded-3xl p-6 shadow-xl flex flex-col justify-between items-center text-center">
+                        <div class="w-full flex justify-between items-center text-amber-100">
+                            <span id="card-pos-back" class="text-xs font-bold px-3 py-1 bg-orange-600/60 rounded-full">명사</span>
+                            <button onclick="event.stopPropagation(); speakWord();" class="p-2.5 bg-white/20 hover:bg-white/30 rounded-full text-white transition">
+                                <i data-lucide="volume-2" class="w-6 h-6"></i>
+                            </button>
+                        </div>
+                        <div class="my-auto px-2">
+                            <h3 id="card-meaning" class="text-3xl font-jua mb-3 text-yellow-200 drop-shadow">모험</h3>
+                            <p id="card-example" class="text-sm text-amber-50 italic bg-black/15 p-3 rounded-2xl border border-white/20 font-medium">
+                                "They started an exciting adventure."
+                            </p>
+                        </div>
+                        <p class="text-xs text-amber-100 font-bold flex items-center gap-1">
+                            <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> 다시 누르면 영어단어!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Controls -->
+            <div class="flex items-center gap-3 pt-1">
+                <button onclick="prevCard()" class="flex-1 py-3 px-4 bg-white border border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm flex items-center justify-center gap-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> 이전 단어
+                </button>
+                <button onclick="nextCard()" class="flex-1 py-3 px-4 bg-amber-500 hover:bg-amber-600 rounded-2xl font-bold text-white transition shadow-md shadow-amber-200 flex items-center justify-center gap-1">
+                    다음 단어 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Complete Learn Action -->
+            <div class="pt-2 text-center">
+                <button onclick="switchTab('quiz')" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-jua text-lg shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2">
+                    <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                    오늘의 10단어 퀴즈 출발! 🚀
+                </button>
+            </div>
+        </div>
+
+        <!-- Section 2: Quiz Mode -->
+        <div id="view-quiz" class="hidden space-y-4">
+
+            <!-- Turn Indicator for 2-Player Mode -->
+            <div id="multi-player-bar" class="hidden bg-orange-100 border-2 border-orange-300 p-2.5 rounded-2xl flex justify-between items-center font-jua text-sm">
+                <div id="p1-score-box" class="px-3 py-1 rounded-xl bg-white text-orange-600 shadow-sm border border-orange-200">
+                    👶 <span id="p1-display-name">친구 A</span>: <span id="p1-score">0</span>점
+                </div>
+                <div id="turn-badge" class="px-2.5 py-1 bg-orange-500 text-white rounded-lg text-xs font-bold animate-pulse">
+                    친구 A 차례!
+                </div>
+                <div id="p2-score-box" class="px-3 py-1 rounded-xl bg-white text-slate-400 shadow-sm">
+                    🧒 <span id="p2-display-name">친구 B</span>: <span id="p2-score">0</span>점
+                </div>
+            </div>
+
+            <!-- Quiz Progress Bar -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-bold text-slate-600">
+                    <span id="quiz-question-num">문제 1 / 10</span>
+                    <span id="quiz-score-num">점수: 0점</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden p-0.5 border border-slate-100">
+                    <div id="quiz-progress-bar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-full w-1/10 rounded-full transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="bg-white border-2 border-amber-200 rounded-3xl p-5 shadow-xl text-center space-y-4">
+                <div class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold" id="quiz-type-badge">
+                    알맞은 뜻을 골라보세요!
+                </div>
+                
+                <div class="py-1">
+                    <div class="flex items-center justify-center gap-2">
+                        <h2 id="quiz-target-word" class="text-3xl font-jua text-slate-900 tracking-wider">Adventure</h2>
+                        <button onclick="speakQuizWord()" class="p-2 text-amber-600 hover:bg-amber-50 rounded-full transition">
+                            <i data-lucide="volume-2" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multiple Choice Options -->
+                <div id="quiz-options" class="space-y-2.5 text-left">
+                    <!-- Options populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Feedback Alert -->
+            <div id="quiz-feedback" class="hidden p-4 rounded-2xl border-2 flex items-center justify-between bounce-in">
+                <div class="flex items-center gap-3">
+                    <div id="feedback-icon-bg" class="w-10 h-10 rounded-full flex items-center justify-center text-white">
+                        <i id="feedback-icon" data-lucide="check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 id="feedback-title" class="font-jua text-base">정답이에요! 🎉</h4>
+                        <p id="feedback-desc" class="text-xs font-bold text-slate-600">정말 대단해요!</p>
+                    </div>
+                </div>
+                <button id="next-quiz-btn" onclick="nextQuizQuestion()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition">
+                    다음 문제 ▶
+                </button>
+            </div>
+        </div>
+
+        <!-- Section 3: Quiz Results -->
+        <div id="view-result" class="hidden space-y-5 text-center">
+            <div class="bg-white border-2 border-amber-200 rounded-3xl p-6 shadow-xl space-y-4">
+                <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600 shadow-inner">
+                    <i data-lucide="trophy" class="w-10 h-10 text-amber-500"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-jua text-slate-900" id="result-main-title">오늘의 10단어 완료! 🌟</h2>
+                    <p class="text-xs text-slate-500 mt-1" id="result-sub-title">10개 단어를 멋지게 모두 학습했어요!</p>
+                </div>
+
+                <!-- Single Player Result -->
+                <div id="single-result-box" class="bg-amber-50/80 rounded-2xl p-4 flex justify-around border border-amber-200">
+                    <div>
+                        <div class="text-xs text-amber-700 font-bold">내 점수</div>
+                        <div id="result-score" class="text-3xl font-jua text-amber-600">100점</div>
+                    </div>
+                    <div class="w-px bg-amber-200"></div>
+                    <div>
+                        <div class="text-xs text-amber-700 font-bold">맞힌 개수</div>
+                        <div id="result-count" class="text-3xl font-jua text-slate-800">10 / 10</div>
+                    </div>
+                </div>
+
+                <!-- 2-Player Result -->
+                <div id="multi-result-box" class="hidden bg-orange-50 rounded-2xl p-4 border border-orange-200 space-y-3">
+                    <h4 class="font-jua text-lg text-orange-900" id="winner-announcement">🏆 친구 A 승리!</h4>
+                    <div class="flex justify-around text-sm font-bold">
+                        <div class="bg-white p-3 rounded-xl flex-1 mx-1 border border-orange-100">
+                            <div class="text-xs text-slate-500" id="res-p1-name">친구 A</div>
+                            <div id="res-p1-score" class="text-2xl font-jua text-orange-600">50점</div>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl flex-1 mx-1 border border-orange-100">
+                            <div class="text-xs text-slate-500" id="res-p2-name">친구 B</div>
+                            <div id="res-p2-score" class="text-2xl font-jua text-amber-600">40점</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <button onclick="retryQuiz()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold shadow-md transition flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> 퀴즈 다시 도전하기
+                    </button>
+                    <button onclick="nextDaySet()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold transition flex items-center justify-center gap-2">
+                        다음 날(Day) 단어 공부하기 <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Day Select Modal -->
+    <div id="day-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-jua text-lg text-slate-900">Day 선택 (1일~365일)</h3>
+                <button onclick="closeDayModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+                <input type="number" id="custom-day-input" min="1" max="365" placeholder="Day (1~365)" class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-amber-500 font-bold">
+                <button onclick="goToCustomDay()" class="px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold whitespace-nowrap">이동</button>
+            </div>
+            <div id="day-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                <!-- Days populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Audio API Sound Generator -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+    </script>
+
+    <!-- Main Logic Script -->
+    <script>
+        // Elementary 4th Grade Vocabulary Master Pool (Curated for 10-word/day system)
+        const masterVocabulary = [
+            // Day 1
+            { word: "Adventure", phonetic: "[ədˈventʃər]", pos: "명사", meaning: "모험", example: "We started an exciting adventure." },
+            { word: "Brave", phonetic: "[breɪv]", pos: "형용사", meaning: "용감한", example: "The brave knight saved the village." },
+            { word: "Curious", phonetic: "[ˈkjʊriəs]", pos: "형용사", meaning: "호기심이 많은", example: "Cats are very curious animals." },
+            { word: "Delicious", phonetic: "[dɪˈlɪʃəs]", pos: "형용사", meaning: "맛있는", example: "This chocolate cake is delicious!" },
+            { word: "Explore", phonetic: "[ɪkˈsplɔːr]", pos: "동사", meaning: "탐험하다", example: "Let's explore the mystery island." },
+            { word: "Friendly", phonetic: "[ˈfrendli]", pos: "형용사", meaning: "친절한", example: "She is always friendly to everyone." },
+            { word: "Giant", phonetic: "[ˈdʒaɪənt]", pos: "형용사", meaning: "거대한", example: "Look at that giant watermelon!" },
+            { word: "Healthy", phonetic: "[ˈhelθi]", pos: "형용사", meaning: "건강한", example: "Eating apples makes you healthy." },
+            { word: "Imagine", phonetic: "[ɪˈmædʒɪn]", pos: "동사", meaning: "상상하다", example: "Imagine flying high in the sky." },
+            { word: "Journey", phonetic: "[ˈdʒɜːrni]", pos: "명사", meaning: "여행, 여정", example: "Have a safe and happy journey." },
+
+            // Day 2
+            { word: "Kingdom", phonetic: "[ˈkɪŋdəm]", pos: "명사", meaning: "왕국", example: "The king ruled a peaceful kingdom." },
+            { word: "Listen", phonetic: "[ˈlɪsn]", pos: "동사", meaning: "경청하다, 듣다", example: "Listen carefully to the teacher." },
+            { word: "Magic", phonetic: "[ˈmædʒɪk]", pos: "명사", meaning: "마법", example: "He showed us a cool magic trick." },
+            { word: "Nature", phonetic: "[ˈneɪtʃər]", pos: "명사", meaning: "자연", example: "Protecting nature is very important." },
+            { word: "Opportunity", phonetic: "[ˌɑːpərˈtuːnəti]", pos: "명사", meaning: "기회", example: "This is a great opportunity to learn." },
+            { word: "Protect", phonetic: "[prəˈtekt]", pos: "동사", meaning: "보호하다", example: "Wear a helmet to protect your head." },
+            { word: "Quiet", phonetic: "[ˈkwaɪət]", pos: "형용사", meaning: "조용한", example: "Please be quiet in the library." },
+            { word: "Respect", phonetic: "[rɪˈspekt]", pos: "동사", meaning: "존중하다", example: "We should respect our friends." },
+            { word: "Secret", phonetic: "[ˈsiːkrət]", pos: "명사", meaning: "비밀", example: "Can you keep a secret?" },
+            { word: "Together", phonetic: "[təˈɡeðər]", pos: "부사", meaning: "함께", example: "We can do this together!" },
+
+            // Day 3
+            { word: "Universe", phonetic: "[ˈjuːnɪvɜːrs]", pos: "명사", meaning: "우주", example: "The universe is full of bright stars." },
+            { word: "Victory", phonetic: "[ˈvɪktəri]", pos: "명사", meaning: "승리", example: "Our team celebrated the victory." },
+            { word: "Wonderful", phonetic: "[ˈwʌndərfl]", pos: "형용사", meaning: "멋진, 훌륭한", example: "Have a wonderful weekend!" },
+            { word: "X-ray", phonetic: "[ˈeks reɪ]", pos: "명사", meaning: "엑스레이", example: "The doctor checked my bone with X-ray." },
+            { word: "Yummy", phonetic: "[ˈjʌmi]", pos: "형용사", meaning: "맛있는", example: "This ice cream is super yummy!" },
+            { word: "Zealous", phonetic: "[ˈzeləs]", pos: "형용사", meaning: "열심인", example: "He is a zealous soccer player." },
+            { word: "Awesome", phonetic: "[ˈɔːsəm]", pos: "형용사", meaning: "굉장한, 멋진", example: "You did an awesome job today!" },
+            { word: "Brilliant", phonetic: "[ˈbrɪliənt]", pos: "형용사", meaning: "명석한, 눈부신", example: "She had a brilliant idea." },
+            { word: "Challenge", phonetic: "[ˈtʃælɪndʒ]", pos: "명사", meaning: "도전", example: "I like to take on new challenges." },
+            { word: "Discover", phonetic: "[dɪˈskʌvər]", pos: "동사", meaning: "발견하다", example: "We discovered a hidden treasure map." }
+        ];
+
+        // Dynamic 365-day generator for 10 words per day
+        function getWordsForDay(dayNumber) {
+            const list = [];
+            const totalMaster = masterVocabulary.length;
+            const startIndex = ((dayNumber - 1) * 10) % totalMaster;
+
+            for (let i = 0; i < 10; i++) {
+                const itemIdx = (startIndex + i) % totalMaster;
+                list.push(masterVocabulary[itemIdx]);
+            }
+            return list;
+        }
+
+        // State Management
+        let currentDay = 1;
+        let currentWords = [];
+        let currentCardIndex = 0;
+        let quizQuestions = [];
+        let currentQuizIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+        let isRandomMode = false;
+
+        // 2-Player Mode State
+        let gameMode = 'single'; // 'single' or 'multi'
+        let p1Name = "친구 A";
+        let p2Name = "친구 B";
+        let p1Score = 0;
+        let p2Score = 0;
+        let currentTurn = 1; // 1 or 2
+
+        // Initialize App
+        window.onload = () => {
+            lucide.createIcons();
+            const savedDay = localStorage.getItem('last_studied_day_elem') || 1;
+            loadDay(parseInt(savedDay));
+        };
+
+        function loadDay(dayNumber) {
+            isRandomMode = false;
+            currentDay = dayNumber;
+            localStorage.setItem('last_studied_day_elem', dayNumber);
+            currentWords = getWordsForDay(dayNumber);
+            currentCardIndex = 0;
+
+            document.getElementById('current-day-label').innerText = `Day ${dayNumber} 단어장`;
+            document.getElementById('selected-day-btn-text').innerText = `Day ${dayNumber}`;
+            document.getElementById('learn-mode-title').innerText = `Day ${dayNumber} 카드 (터치해서 뜻 확인!)`;
+
+            renderCard();
+            prepareQuiz();
+            closeDayModal();
+            switchTab('learn');
+        }
+
+        function pickRandom10Words() {
+            isRandomMode = true;
+            const shuffled = [...masterVocabulary].sort(() => 0.5 - Math.random());
+            currentWords = shuffled.slice(0, 10);
+            currentCardIndex = 0;
+
+            document.getElementById('current-day-label').innerText = `오늘의 랜덤 10단어`;
+            document.getElementById('selected-day-btn-text').innerText = `랜덤 모드`;
+            document.getElementById('learn-mode-title').innerText = `랜덤 10단어 (터치해서 뜻 확인!)`;
+
+            renderCard();
+            prepareQuiz();
+            switchTab('learn');
+        }
+
+        function setMode(mode) {
+            gameMode = mode;
+            const singleBtn = document.getElementById('mode-single');
+            const multiBtn = document.getElementById('mode-multi');
+            const multiBar = document.getElementById('multi-player-bar');
+            const nameInputBox = document.getElementById('player-names-input');
+
+            if (mode === 'single') {
+                singleBtn.className = "flex-1 py-1.5 rounded-xl text-center bg-white text-amber-900 shadow-sm transition flex items-center justify-center gap-1 font-bold";
+                multiBtn.className = "flex-1 py-1.5 rounded-xl text-center text-amber-700 hover:text-amber-900 transition flex items-center justify-center gap-1";
+                multiBar.classList.add('hidden');
+                nameInputBox.classList.add('hidden');
+            } else {
+                multiBtn.className = "flex-1 py-1.5 rounded-xl text-center bg-white text-orange-900 shadow-sm transition flex items-center justify-center gap-1 font-bold";
+                singleBtn.className = "flex-1 py-1.5 rounded-xl text-center text-amber-700 hover:text-amber-900 transition flex items-center justify-center gap-1";
+                multiBar.classList.remove('hidden');
+                nameInputBox.classList.remove('hidden');
+            }
+            prepareQuiz();
+        }
+
+        function applyPlayerNames() {
+            const p1Val = document.getElementById('p1-name-input').value.trim();
+            const p2Val = document.getElementById('p2-name-input').value.trim();
+            if (p1Val) p1Name = p1Val;
+            if (p2Val) p2Name = p2Val;
+            updateMultiDisplay();
+        }
+
+        function updateMultiDisplay() {
+            document.getElementById('p1-display-name').innerText = p1Name;
+            document.getElementById('p2-display-name').innerText = p2Name;
+            document.getElementById('p1-score').innerText = p1Score;
+            document.getElementById('p2-score').innerText = p2Score;
+            
+            const badge = document.getElementById('turn-badge');
+            const box1 = document.getElementById('p1-score-box');
+            const box2 = document.getElementById('p2-score-box');
+
+            if (currentTurn === 1) {
+                badge.innerText = `${p1Name} 차례! 👦`;
+                badge.className = "px-2.5 py-1 bg-orange-500 text-white rounded-lg text-xs font-bold animate-pulse";
+                box1.className = "px-3 py-1 rounded-xl bg-white text-orange-600 shadow-sm border border-orange-300 font-bold";
+                box2.className = "px-3 py-1 rounded-xl bg-white text-slate-400 shadow-sm";
+            } else {
+                badge.innerText = `${p2Name} 차례! 🧒`;
+                badge.className = "px-2.5 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold animate-pulse";
+                box2.className = "px-3 py-1 rounded-xl bg-white text-amber-600 shadow-sm border border-amber-300 font-bold";
+                box1.className = "px-3 py-1 rounded-xl bg-white text-slate-400 shadow-sm";
+            }
+        }
+
+        function renderCard() {
+            const word = currentWords[currentCardIndex];
+            document.getElementById('flash-card').classList.remove('flipped');
+            
+            setTimeout(() => {
+                document.getElementById('card-pos').innerText = word.pos;
+                document.getElementById('card-word').innerText = word.word;
+                document.getElementById('card-phonetic').innerText = word.phonetic;
+
+                document.getElementById('card-pos-back').innerText = word.pos;
+                document.getElementById('card-meaning').innerText = word.meaning;
+                document.getElementById('card-example').innerText = `"${word.example}"`;
+
+                document.getElementById('card-progress').innerText = `${currentCardIndex + 1} / ${currentWords.length}`;
+            }, 150);
+        }
+
+        function toggleCardFlip() {
+            document.getElementById('flash-card').classList.toggle('flipped');
+        }
+
+        function prevCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                renderCard();
+            }
+        }
+
+        function nextCard() {
+            if (currentCardIndex < currentWords.length - 1) {
+                currentCardIndex++;
+                renderCard();
+            }
+        }
+
+        function speakWord() {
+            const wordObj = currentWords[currentCardIndex];
+            const utterance = new SpeechSynthesisUtterance(wordObj.word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakQuizWord() {
+            const q = quizQuestions[currentQuizIndex];
+            if (q) {
+                const utterance = new SpeechSynthesisUtterance(q.word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function switchTab(tab) {
+            const viewLearn = document.getElementById('view-learn');
+            const viewQuiz = document.getElementById('view-quiz');
+            const viewResult = document.getElementById('view-result');
+
+            const tabLearn = document.getElementById('tab-learn');
+            const tabQuiz = document.getElementById('tab-quiz');
+
+            if (tab === 'learn') {
+                viewLearn.classList.remove('hidden');
+                viewQuiz.classList.add('hidden');
+                viewResult.classList.add('hidden');
+
+                tabLearn.className = "flex-1 py-2.5 rounded-xl text-center bg-white text-amber-600 shadow-sm transition";
+                tabQuiz.className = "flex-1 py-2.5 rounded-xl text-center text-slate-600 hover:text-slate-900 transition flex items-center justify-center gap-1";
+            } else if (tab === 'quiz') {
+                viewLearn.classList.add('hidden');
+                viewQuiz.classList.remove('hidden');
+                viewResult.classList.add('hidden');
+
+                tabQuiz.className = "flex-1 py-2.5 rounded-xl text-center bg-white text-amber-600 shadow-sm transition flex items-center justify-center gap-1";
+                tabLearn.className = "flex-1 py-2.5 rounded-xl text-center text-slate-600 hover:text-slate-900 transition";
+
+                if (currentQuizIndex >= quizQuestions.length) {
+                    prepareQuiz();
+                }
+                renderQuizQuestion();
+            }
+        }
+
+        function prepareQuiz() {
+            score = 0;
+            p1Score = 0;
+            p2Score = 0;
+            currentTurn = 1;
+            currentQuizIndex = 0;
+            updateMultiDisplay();
+
+            const poolMeanings = masterVocabulary.map(v => v.meaning);
+
+            quizQuestions = currentWords.map(item => {
+                const wrongOptions = poolMeanings
+                    .filter(m => m !== item.meaning)
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 3);
+
+                const options = [item.meaning, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+                return {
+                    word: item.word,
+                    correctAnswer: item.meaning,
+                    options: options
+                };
+            });
+        }
+
+        function renderQuizQuestion() {
+            isAnswered = false;
+            const q = quizQuestions[currentQuizIndex];
+            const total = quizQuestions.length;
+
+            document.getElementById('quiz-question-num').innerText = `문제 ${currentQuizIndex + 1} / ${total}`;
+            document.getElementById('quiz-score-num').innerText = `점수: ${score}점`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuizIndex + 1) / total) * 100}%`;
+            document.getElementById('quiz-target-word').innerText = q.word;
+
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full p-4 rounded-2xl border-2 border-slate-200 bg-white font-bold text-slate-800 text-left hover:border-amber-400 hover:bg-amber-50/50 transition flex items-center justify-between group";
+                btn.onclick = () => checkAnswer(opt, btn);
+                btn.innerHTML = `
+                    <span class="text-base">${idx + 1}. ${opt}</span>
+                    <i data-lucide="circle" class="w-5 h-5 text-slate-300 group-hover:text-amber-500"></i>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            lucide.createIcons();
+            speakQuizWord();
+        }
+
+        function checkAnswer(selectedOpt, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = quizQuestions[currentQuizIndex];
+            const isCorrect = selectedOpt === q.correctAnswer;
+            const allBtns = document.querySelectorAll('.option-btn');
+
+            allBtns.forEach(btn => btn.disabled = true);
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const feedbackIconBg = document.getElementById('feedback-icon-bg');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackDesc = document.getElementById('feedback-desc');
+
+            if (isCorrect) {
+                playSound('correct');
+                score += 10;
+                if (gameMode === 'multi') {
+                    if (currentTurn === 1) p1Score += 10;
+                    else p2Score += 10;
+                    updateMultiDisplay();
+                }
+
+                btnElement.className = "option-btn w-full p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 font-extrabold text-emerald-900 text-left flex items-center justify-between";
+                btnElement.querySelector('i').setAttribute('data-lucide', 'check-circle-2');
+                btnElement.querySelector('i').className = "w-6 h-6 text-emerald-600";
+
+                feedbackEl.className = "p-4 rounded-2xl border-2 border-emerald-300 bg-emerald-50 flex items-center justify-between bounce-in";
+                feedbackIconBg.className = "w-10 h-10 rounded-full flex items-center justify-center text-white bg-emerald-500 shadow-md";
+                feedbackIcon.setAttribute('data-lucide', 'check');
+                feedbackTitle.innerText = "정답이에요! 🎉";
+                feedbackTitle.className = "font-jua text-base text-emerald-900";
+                feedbackDesc.innerText = "멋진 실력이네요! +10점";
+            } else {
+                playSound('wrong');
+                btnElement.className = "option-btn w-full p-4 rounded-2xl border-2 border-rose-500 bg-rose-50 font-extrabold text-rose-900 text-left flex items-center justify-between";
+                btnElement.querySelector('i').setAttribute('data-lucide', 'x-circle');
+                btnElement.querySelector('i').className = "w-6 h-6 text-rose-600";
+
+                allBtns.forEach(btn => {
+                    if (btn.innerText.includes(q.correctAnswer)) {
+                        btn.className = "option-btn w-full p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 font-extrabold text-emerald-900 text-left flex items-center justify-between";
+                    }
+                });
+
+                feedbackEl.className = "p-4 rounded-2xl border-2 border-rose-300 bg-rose-50 flex items-center justify-between bounce-in";
+                feedbackIconBg.className = "w-10 h-10 rounded-full flex items-center justify-center text-white bg-rose-500 shadow-md";
+                feedbackIcon.setAttribute('data-lucide', 'x');
+                feedbackTitle.innerText = "아쉽네요! 😅";
+                feedbackTitle.className = "font-jua text-base text-rose-900";
+                feedbackDesc.innerText = `정답은 "${q.correctAnswer}" 입니다.`;
+            }
+
+            feedbackEl.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function nextQuizQuestion() {
+            currentQuizIndex++;
+            if (gameMode === 'multi') {
+                currentTurn = currentTurn === 1 ? 2 : 1;
+                updateMultiDisplay();
+            }
+
+            if (currentQuizIndex < quizQuestions.length) {
+                renderQuizQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('view-quiz').classList.add('hidden');
+            document.getElementById('view-result').classList.remove('hidden');
+
+            const singleBox = document.getElementById('single-result-box');
+            const multiBox = document.getElementById('multi-result-box');
+
+            if (gameMode === 'single') {
+                singleBox.classList.remove('hidden');
+                multiBox.classList.add('hidden');
+                document.getElementById('result-main-title').innerText = "오늘의 10단어 완료! 🌟";
+                document.getElementById('result-sub-title').innerText = "10개 단어를 멋지게 모두 학습했어요!";
+                document.getElementById('result-score').innerText = `${score}점`;
+                document.getElementById('result-count').innerText = `${score / 10} / 10`;
+            } else {
+                singleBox.classList.add('hidden');
+                multiBox.classList.remove('hidden');
+
+                document.getElementById('result-main-title').innerText = "2인 대결 종료! 🥊";
+                document.getElementById('res-p1-name').innerText = p1Name;
+                document.getElementById('res-p2-name').innerText = p2Name;
+                document.getElementById('res-p1-score').innerText = `${p1Score}점`;
+                document.getElementById('res-p2-score').innerText = `${p2Score}점`;
+
+                const ann = document.getElementById('winner-announcement');
+                if (p1Score > p2Score) {
+                    ann.innerText = `🏆 ${p1Name} 승리! 축하해요!`;
+                } else if (p2Score > p1Score) {
+                    ann.innerText = `🏆 ${p2Name} 승리! 축하해요!`;
+                } else {
+                    ann.innerText = "🤝 무승부! 둘 다 최고예요!";
+                }
+            }
+
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function retryQuiz() {
+            prepareQuiz();
+            switchTab('quiz');
+        }
+
+        function nextDaySet() {
+            if (isRandomMode) {
+                pickRandom10Words();
+            } else {
+                const nextDay = currentDay < 365 ? currentDay + 1 : 1;
+                loadDay(nextDay);
+            }
+        }
+
+        // --- Day Selection Modal ---
+        function openDayModal() {
+            const dayListContainer = document.getElementById('day-list');
+            dayListContainer.innerHTML = '';
+
+            for (let dayInt = 1; dayInt <= 15; dayInt++) {
+                const isSelected = !isRandomMode && dayInt === currentDay;
+                const btn = document.createElement('button');
+                btn.className = `w-full p-3 rounded-2xl font-bold text-xs text-left flex items-center justify-between transition ${
+                    isSelected ? 'bg-amber-100 text-amber-900 border-2 border-amber-300' : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
+                }`;
+                btn.onclick = () => loadDay(dayInt);
+                btn.innerHTML = `
+                    <span>Day ${dayInt} (10단어)</span>
+                    ${isSelected ? '<i data-lucide="check" class="w-4 h-4 text-amber-600"></i>' : ''}
+                `;
+                dayListContainer.appendChild(btn);
+            }
+
+            document.getElementById('day-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function goToCustomDay() {
+            const inputVal = parseInt(document.getElementById('custom-day-input').value);
+            if (inputVal && inputVal >= 1 && inputVal <= 365) {
+                loadDay(inputVal);
+            }
+        }
+
+        function closeDayModal() {
+            document.getElementById('day-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
